@@ -178,23 +178,19 @@
         + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             + CategoryInfo          : ObjectNotFound: (C:\Test\NonExistingFile.txt:String) [Test-LevelOne], ItemNotFoundException
             + FullyQualifiedErrorId : NotSpecified
-
-        Source.CategoryInfo     : "ObjectNotFound: (C:\Test\NonExistingFile.txt:String) [Test-LevelTwo], ItemNotFoundException"
-        Source.Exception.Message: "Cannot find path 'C:\Test\NonExistingFile.txt' because it does not exist."
-        Source.Exception.Line   : Test-LevelTwo -TestLevelTwoParameter "This is a parameter for Test-LevelTwo"
-        Source.Exception.Thrown : At C:\Test\Test.ps1:22 char:9
-                                +  Test-LevelTwo -TestLevelTwoParameter "This is a parameter for ...
-                                +  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+        +         Source.CategoryInfo     : "ObjectNotFound: (C:\Test\NonExistingFile.txt:String) [Test-LevelTwo], ItemNotFoundException"
+        +         Source.Exception.Message: "Cannot find path 'C:\Test\NonExistingFile.txt' because it does not exist."
+        +         Source.Exception.Thrown : At C:\Test\Test.ps1:22 char:9
+        +         Test-LevelTwo -TestLevelTwoParameter "This is a parameter for ...
+        +         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        +
         --- Test-LevelTwo : NotSpecified
-
-        Source.CategoryInfo     : "ObjectNotFound: (C:\Test\NonExistingFile.txt:String) [Get-Content], ItemNotFoundException"
-        Source.Exception.Message: "Cannot find path 'C:\Test\NonExistingFile.txt' because it does not exist."
-        Source.Exception.Line   : Get-Content NonExistingFile.txt -ErrorAction Stop
-        Source.Exception.Thrown : At C:\Test\Test.ps1:10 char:9
-                                +  Get-Content NonExistingFile.txt -ErrorAction Stop
-                                +  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+        +         Source.CategoryInfo     : "ObjectNotFound: (C:\Test\NonExistingFile.txt:String) [Get-Content], ItemNotFoundException"
+        +         Source.Exception.Message: "Cannot find path 'C:\Test\NonExistingFile.txt' because it does not exist."
+        +         Source.Exception.Thrown : At C:\Test\Test.ps1:10 char:9
+        +         Get-Content NonExistingFile.txt -ErrorAction Stop
+        +         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        +
         --- Get-Content : PathNotFound,Microsoft.PowerShell.Commands.GetContentCommand,Test-LevelTwo,Test-LevelOne
 
         Take good note of the position for all exceptions in the chain, included
@@ -247,10 +243,10 @@
 
     .NOTES
         Author.: Kenneth Nielsen (sharzas @ GitHub.com)
-        Version: 1.1
+        Version: 1.2
 
     .LINK
-        https://github.com/sharzas/Powershell-Get-StorCLIStatus
+        https://github.com/sharzas/Powershell-New-ErrorRecord
     #>
 
     [CmdletBinding()]
@@ -366,11 +362,11 @@
     
             foreach ($Word in $Words) {
                 $Skip = $false
-    
-                Write-Verbose ('Split-WordWrap(): ("{0}" + "{1}").Length -gt "{2}" = "{3}"' -f $NewLine, ('{0}' -f $Word), $Width, $(($NewLine + $Word).Length -gt $Width))
-    
+        
                 if (($NewLine + ('{0}' -f $Word)).Length -gt $Width) {
                     # Current line + addition of the next word, will exceed the specified width, so we need to wrap here
+                    Write-Verbose ('Split-WordWrap(Wrap): ("{0}" + "{1}").Length -gt "{2}" = "{3}"' -f $NewLine, ('{0}' -f $Word), $Width, $(($NewLine + $Word).Length -gt $Width))
+
                     if ($Word.Length -gt $Width) {
                         # The next word is wider than the specified width, so we need to split that word in order to
                         # be able to wrap it.
@@ -475,14 +471,9 @@ Source.Exception.Thrown : {5}
 '@
                 
                 if (!$PSBoundParameters.ContainsKey("errorId")) {
-                    # -errorId not specified, so merge "NotSpecified" string with FullyQualifiedErrorId chain
-                    # of existing ErrorRecord.
-                    #
-                    # We will do some word wrapping here as well, with respect to the current size of the
-                    # Powershell Host Window, to avoid some indentation done by Powershell when displaying
-                    # ErrorRecords, containing lines that doesn't fit the Console window.
-                    #
-                    Write-Verbose ('New-ErrorRecord(): -errorId NOT specified: constructing by merging "NotSpecified" string with FullyQualifiedErrorId chain.')
+                    # -errorId not specified, so simply set value to InvocationInfo.PositionMessage 
+                    # of existing ErrorRecord
+                    Write-Verbose ('New-ErrorRecord(): -errorId NOT specified: constructing by merging empty string with FullyQualifiedErrorId chain.')
 
                     $errorId = $errorIdBase -f `
                         "NotSpecified", `
@@ -495,11 +486,6 @@ Source.Exception.Thrown : {5}
                         $baseObject.FullyQualifiedErrorId
                 } else {
                     # -errorId specified, so merge with existing ErrorRecords InvocationInfo and a NewLine.
-                    #
-                    # We will do some word wrapping here as well, with respect to the current size of the
-                    # Powershell Host Window, to avoid some indentation done by Powershell when displaying
-                    # ErrorRecords, containing lines that doesn't fit the Console window.
-                    #
                     Write-Verbose ('New-ErrorRecord(): -errorId specified: constructing by merging -errorId with FullyQualifiedErrorId chain.')
 
                     $errorId = $errorIdBase -f `
